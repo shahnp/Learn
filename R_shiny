@@ -1,0 +1,29 @@
+**Add-on Packages for Shiny**
+
+shinyjs - extends the Shiny package and provides utilities for calling custom Javascript bindings
+
+shinythemes - adds Bootswatch CSS themes to Shiny applications
+
+shinydashboard - wraps the Admin LTE library for creating dashboard interfaces
+
+leaflet - wraps the leaflet Javascript library for interactive, mobile-friendly web-mapping
+
+DT - interactive tables
+
+dygraphs - interactive time-series charts
+
+ggvis - similar to ggplot2, but the plots are focused on being web-based and are more interactive
+
+googleVis - interface to the Google Charts API
+
+crosstalk - enables cross-widget interaction
+
+loggit - adds logging to R (shiny)
+
+plumbr - create web APIs that call R
+
+reticulate - R interface to Python modules, classes, and functions
+
+promises - enables asynchronous evaluation of R code
+
+And many more! Explore them here: <gallery.htmlwidgets.org>
