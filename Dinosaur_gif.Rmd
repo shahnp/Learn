@@ -95,11 +95,5 @@ anim_save("dino_timeline.gif", dino_timeline)
 dino_timeline
 ```
 
-```{r}
-
-```
-
-```{r}
-
-```
+https://rpubs.com/shah_np/505572
 
