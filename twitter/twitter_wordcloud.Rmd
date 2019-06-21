@@ -1,0 +1,286 @@
+---
+title: "facebook_tweets"
+author: "Pankaj Shah"
+date: "6/20/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Take tweet from twitter using rtweet package
+
+- “Topic” : topic you will find at twitter 
+-  n : how many tweet that you want to take 
+-  include_rts : logical. If FALSE tweet taken didn’t contain retweet 
+- lang = “en”  [English]
+
+# Load the Library
+```{r}
+pacman::p_load("tm", "SnowballC", "wordcloud2", "RColorBrewer", "RCurl", "XML", "dplyr", "rtweet", "textclean")
+```
+
+# Authentication
+```{r include=FALSE}
+create_token(app = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+             consumer_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+             consumer_secret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+             access_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+             access_secret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
+tweets <- search_tweets("facebook", n=500, include_rts = FALSE, lang = "en")
+```
+
+# Save into CSV
+```{r}
+# tweets_text <- tweets[,"text"] 
+#   write.csv(tweets_text, "tweets.csv")
+```
+
+# Reading the save file
+```{r}
+tweets <- read.csv("https://raw.githubusercontent.com/shahnp/data/master/tweets.csv")
+```
+
+
+```{r}
+
+# If we didn't save as csv then we can unnest tokens 
+
+#Unnest the words - code via Tidy Text
+# tweets_text  <- tweets_text  %>%
+#                    tidytext::unnest_tokens(word, text)
+```
+
+
+# Duplicates
+Lets Remove duplicate tweet using dplyr package
+```{r}
+tweets_text <- tweets %>% distinct(text)
+```
+
+
+# Check content text
+
+```{r}
+check_text(tweets_text$text)
+```
+
+# Stop_words
+
+```{r, message=FALSE, error=FALSE}
+
+#remove stop words - aka typically very common words such as "the", "of" etc
+data(stop_words, package = "tidytext")
+tweets_text  <- tweets_text  %>% filter(!text %in% stop_words$word)
+```
+
+
+# Empty Rows
+
+Drop empty rows and NA text rows, then change class to character
+```{r}
+tweets_text <- tweets_text %>% 
+                  drop_empty_row() %>% 
+                    drop_NA()
+tweets_text <- as.character(tweets$text)
+```
+
+
+# Replace contraction
+
+
+```{r}
+tweets_text <- replace_contraction(tweets_text) #wasn’t : was not, I’ll: I will, isn’t:is not , i’d : i would 
+
+```
+
+# Remove date
+
+```{r}
+tweets_text <- replace_date(tweets_text, replacement = "")
+```
+
+# Remove email
+
+
+```{r}
+tweets_text <- replace_email(tweets_text)
+```
+
+# Replace emoji
+
+```{r}
+tweets_text <- replace_emoji(tweets_text)
+```
+
+
+# Replace emoticon 
+:) : smiley 
+ :’( : crying 
+  :* : kiss 
+  
+```{r}
+tweets_text <- replace_emoticon(tweets_text)
+```
+
+# Replace grade
+
+Replaces grades with word equivalents. Example: 
+- A : very excellent 
+- B+ : almost excellent 
+- D : bad 
+- etc
+
+```{r}
+tweets_text <- replace_grade(tweets_text)
+```
+
+# Remove hashtags
+
+Replaces Twitter hash tags with blank character. Example: 
+- #Rforbigdata : “” 
+- #happynewyear2019 : “” 
+- etc
+
+```{r}
+tweets_text <- replace_hash(tweets_text)
+```
+
+# Remove HTML
+
+Remove angle braces and replaces HTML symbol markup with equivalent symbols. Example: 
+- : “” 
+- < &gt : < > 
+- etc 
+But, more recommended to add parameters in this function like symbol if you want to replace or remove HTML symbol markup. Example for argument symbol: 
+symbol = TRUE/FALSE : logical. If FALSE HTML symbol markup will be removed
+
+```{r}
+tweets_text <- replace_html(tweets_text, symbol = FALSE)
+```
+
+# Remove incomplete sentence
+
+Replaces incomplete sentence end marks with “|”. Example: 
+- … : | 
+- .? : | 
+- etc 
+But, more recommended to add parameters in this function like replacement if you don’t want to add | as replacement of incomplete sentence. Example for argument replacement: 
+replacement = “” : replace incomplete sentence with blank character or don’t add |
+
+```{r}
+tweets_text <- replace_incomplete(tweets_text, replacement = "")
+```
+
+# Replace internet slang
+
+Replaces internet slang with longer word equivalents that are more easily analyzed. Example: 
+- 2nte : tonight 
+- ASAP : as soon as possible 
+- TGIF : thank god, it’s friday 
+- etc
+
+```{r}
+tweets_text <- replace_internet_slang(tweets_text)
+```
+
+# Replace number
+
+Numeric to be replaced with words. Example: 
+- 1.997 : November sixteenth, one thousand nine hundred eighty 
+- 28 : January thirty first, two thousand nineteen 
+- 1,888 : - etc 
+But, more recommended to add parameters in this function like replacement if you want to replace or remove date content. Example for argument replacement: 
+replacement = “” : replace date content with blank character or remove date content
+
+```{r}
+tweets_text <- replace_number(tweets_text, remove = TRUE)
+```
+
+
+#Remove tag
+
+Replaces Twitter style handle tags with blank character. Example: 
+- @ramnath_vaidya : “” 
+- @wulan123 : “” 
+- @hadley : “” 
+- etc
+
+```{r}
+tweets_text <- replace_tag(tweets_text)
+```
+
+#Remove url
+
+Replace URLs with blank character. Example: 
+- http://renkun.me/r/2014/07/26/difference-between-magrittr-and-pipeR.html : “” 
+- ftp://cran.r-project.org/incoming/ : “” 
+- etc
+
+```{r}
+tweets_text <- replace_url(tweets_text, replacement = "")
+```
+
+#Repalace word elongation
+
+Replaces un-normalized forms with the most likely normalized form. Example: 
+- noooooo! : no! - it’s sooo goooood : it’s so good - Wwwhhatttt! : what! - etc
+
+```{r}
+tweets_text <- replace_word_elongation(tweets_text)
+```
+
+Lets look at the head 
+```{r}
+tweets_text %>% head(5)
+```
+
+
+```{r}
+# do a word count
+# tweets_text %>%
+#   count(word, sort = TRUE) %>% head(20) 
+```
+
+
+```{r}
+# Remove other nonsense words
+# tweets_text <-tweets_text %>%
+#   filter(!word %in% c('t.co', 'https', 'handmaidstale', "handmaid's", 'season', 'episode', 'de', 'handmaidsonhulu',  'tvtime','watched', 'watching', 'watch', 'la', "it's", 'el', 'en', 'tv','je', 'ep', 'week', 'amp'))
+```
+
+#ˆWordCloud
+WordCloud is used to display text data visually. By using WordCloud, the frequency of words can be displayed in an interesting form but still informative. More often a word is used, bigger the size of the word is displayed in WordCloud.
+
+Function used for making WordCloud is wordcloud(). There are several parameter usually used in that function: 
+- data : the text contain words that will be made wordCloud 
+- min.freq : minimum frequency of words to be displayed 
+- max.words : maximum words that will be displayed 
+- random.order : words that have large frequencies will be plotted near the center 
+- colors : coloring WordCloud
+
+```{r}
+library(tokenizers)
+tweets_text <- tweets_text %>% 
+                    tokenize_words() %>% 
+                         as.character()
+
+library(RColorBrewer)
+library(wordcloud)
+wordcloud(tweets_text,
+         min.freq=1, 
+         max.words = 80, 
+         random.order = FALSE, 
+         colors=brewer.pal(7, "Set2")) 
+```
+tdm : term-document matrix
+freqTable : frequency table
+
+
+
+
