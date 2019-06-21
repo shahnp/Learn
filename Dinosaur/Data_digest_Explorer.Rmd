@@ -25,11 +25,5 @@ explorer(data = list(Cars = mtcars, Iris = iris), addEnv = FALSE)
 explorerApp()
 ```
 
-```{r}
 
-```
-
-```{r}
-
-```
 
