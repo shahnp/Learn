@@ -1,0 +1,916 @@
+---
+title: "BK_McD_KFC_animation"
+author: "Pankaj Shah"
+date: "6/27/2019"
+output: 
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    fig_width: 8
+    fig_height: 6.0
+    theme: yeti
+    highlight: textmate
+    code_folding: hide
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 100%;
+    max-width: 800px;
+    margin: auto;
+    line-height: 20px;
+    warning: no
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE) # set this so that the user cannot see the code.
+```
+
+<style>
+body {
+text-align: justify;
+font-family: Times New Roman;
+font-size: 14pt;}
+</style>
+
+```{r, message=FALSE, warning=FALSE}
+devtools::install_github("rstudio/rsconnect")
+```
+
+![Watch Above Video for atleast more than 30 seconds to see all the moving effects. ](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/KFC_BK_Mac_animation.gif?raw=true)
+
+McDonald's  ( MCD ) and Burger King (which is operated by Restaurant Brands International (RBI) ( QSR )) , compete closely with each other in the fast food segment. However with its much bigger size and larger market share ( 19% vs. 5% according to recent estimates ), McDonald's is clearly the leader. A couple of years ago, it appeared that Burger King was threatening McDonald's after it was taken over by Restaurant Brands International (RBI) which pursued an aggressive expansion strategy and focused on cutting down costs. However, with its All Day Breakfast and focus on healthier food items along with a renewed focus on McCafe, it now appears that McDonald's is better positioned to compete with Burger King ( BK ) and Tim Hortons - the coffee chain run by RBI. In the past two years, McDonald's has been aggressively refranchising its restaurants and as both burger giants move towards a nearly 100% franchised model we expect a similar rate of growth in the franchised restaurants of both players.  However, since McDonald's has a larger base, its restaurant growth in absolute terms would be higher in the next few years.
+KFC is the second largest fast-food chain after McDonald’s and one of the top McDonalds Competitors. Its specialty is in fried chicken and burgers. Founded in 1930, the brand has grown and expanded into other territories with close to 20,000 branches or locations in more than 120 countries
+
+In terms of menu choices, fast-food chains are a lot like car brands — there's something for everyone.
+
+Five-piece chicken nuggets for the on-the-go soccer mom. A quarter pounder with cheese for the erudite lovers of the classics. A salad for ... someone.
+
+And for the person who enjoys the finer things in life, there are the flagships: the signature burgers. Without these cheeseburgers, fast food would lose all meaning.
+```{r}
+
+```
+
+# Burger King
+
+![Burger King Animation gif](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/bk_animation_1.gif?raw=true)
+
+Burger King (BK) is an American global chain of hamburger fast food restaurants. Headquartered in the unincorporated area of Miami-Dade County, Florida, the company was founded in 1953 as Insta-Burger King, a Jacksonville, Florida–based restaurant chain. After Insta-Burger King ran into financial difficulties in 1954, its two Miami-based franchisees David Edgerton and James McLamore purchased the company and renamed it "Burger King". Over the next half-century, the company would change hands four times, with its third set of owners, a partnership of TPG Capital, Bain Capital, and Goldman Sachs Capital Partners, taking it public in 2002. In late 2010, 3G Capital of Brazil acquired a majority stake in the company, in a deal valued at US$3.26 billion. The new owners promptly initiated a restructuring of the company to reverse its fortunes. 3G, along with partner Berkshire Hathaway, eventually merged the company with the Canadian-based doughnut chain Tim Hortons, under the auspices of a new Canadian-based parent company named Restaurant Brands International.
+
+The 1970s were the "Golden Age" of the company's advertising, but beginning in the early-1980s, Burger King advertising began losing focus. A series of less successful advertising campaigns created by a procession of advertising agencies continued for the next two decades. In 2003, Burger King hired the Miami-based advertising agency Crispin Porter + Bogusky (CP+B), which completely reorganized its advertising with a series of new campaigns centered on a redesigned Burger King character nicknamed "The King", accompanied by a new online presence. While highly successful, some of CP+B's commercials were derided for perceived sexism or cultural insensitivity. Burger King's new owner, 3G Capital, later terminated the relationship with CP+B in 2011 and moved its advertising to McGarryBowen, to begin a new product-oriented campaign with expanded demographic targeting.
+
+Lets start to see the timeline when it starte till now. How it has expanded throughout the world.
+For this we need to load necessary libraries.
+
+Lets load the necessary libraries
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(rvest)
+library(sf) # Simple Features standard
+library(glue)
+library(rnaturalearth)
+library(gifski)
+library(janitor)
+library(DataExplorer)
+library(gganimate)
+```
+
+
+**Load websites: Burger King From Wikipedia**
+
+I am going to extract all the location of Burger King franchise throughout the world.So best place to do would be to  scrape the data from the wikipedia.
+```{r}
+url <- "https://en.wikipedia.org/wiki/List_of_countries_with_Burger_King_franchises"
+```
+
+**First challange** would be to scrape multiple tables as their is not a single table of all the location at one place.
+We could scrape all individual table and bind them together so let's write function which will be able to pull all the tables and bind them into one. 
+
+But first lets see how many tables are there in Wikipedia and we have to find table of interest.
+
+```{r}
+bk_url <- "https://en.wikipedia.org/wiki/List_of_countries_with_Burger_King_franchises"
+bk_html <- read_html(bk_url) %>% 
+              html_nodes("table") %>%  # Gives all the uhtml tables
+                html_table(header=T, fill = TRUE)
+```
+
+Above line of code just return the table list but still we cannot see what is inside each table until and unless we visit the site and manually compare them. Other option will be to convert all this into table.
+
+# Extraction
+
+Extract all the tables that are in the webpage
+
+We have 15 outputs from above line of code.
+Now we can see all the tables that are built in the webpage. Our table of interest are from table 2 i.e 3rd output till table 8 (9th output). We can look into each table like this.
+
+```{r}
+table <- read_html(bk_url) %>% 
+              html_nodes("table") %>%  # Gives all the uhtml tables
+                html_table(header=T, fill = TRUE)
+
+table[2] # beginning of the table
+table[8] # Ending of the table
+```
+
+One option would be to just bind all the tables into one by passing bind_rows function but the issue is some of the table column name is integer and some of them is character. and will take longer time to change each if we have multiple tables. Luckily we have only 9 table of interest here.
+
+```{r}
+glimpse(table[2])
+glimpse(table[3])
+glimpse(table[4])
+glimpse(table[5])
+```
+
+As you can see the year entered in table 3 is character and in table 4 it is integer. Similarly we have Column name for table 2 is Country/territory but in table 3 it is just Country.
+
+```{r}
+# Function to bind the rows from dplyr function.
+table_3_5 <- bind_rows(table[3], table[5])
+glimpse(table_3_5)
+```
+
+**Alternative way to do same thing much less hassle way.**
+
+Lets write a function to extract all the tables of interest from above list.
+
+# Function :
+
+Extract all the tables.
+
+Xpath : //*[@id="mw-content-text"]/div/table[2]
+
+1. I get this by going to inspect page.
+2. Then scroll around the Elements tab all the line until and unless it starts select/highlights the first table.
+3. You will see ...(3 dots) on the right hand side of inspect page. 
+4. Click on that and then click on copy and the copy Xpath.
+5. Scroll to another table and do the same thing and now we see the pattern the only difference between all the table is table number.
+
+Just for demonstration purpose I have copy all the Xpath for each table of interest. Now we can built the function based on this. To diagnose more how it is built click on table breakdown(triangle) then see on right hand side of page on Styles tab.We will see it is wrapped around {}. So we just have to substitute number with  {}.  
+
+//*[@id="mw-content-text"]/div/table[2]<br>
+//*[@id="mw-content-text"]/div/table[3]<br>
+//*[@id="mw-content-text"]/div/table[4]<br>
+//*[@id="mw-content-text"]/div/table[5]<br>
+//*[@id="mw-content-text"]/div/table[6]<br>
+//*[@id="mw-content-text"]/div/table[7]<br>
+//*[@id="mw-content-text"]/div/table[8]<br>
+//*[@id="mw-content-text"]/div/table[9]<br>
+
+```{r}
+# Function :
+extract_table_df <- function(table_no){
+                        table <- bk_url %>%
+                          read_html() %>%
+                          html_nodes(xpath = glue('//*[@id="mw-content-text"]/div/table[{table_no}]')) %>% # glue both piece
+                          html_table()
+                          table_df <- table[[1]] %>%
+                          mutate(Yearentered = as.character(Yearentered)) # As some year entered is in integer
+} # Convert that year enetered into character.
+```
+
+
+**Extract all the 6 tables and bind them using map function.**
+
+As in table 3 we have colnames Country and rest of the table has column name country/territory. If we combine them all them the country from table 3 will have missing data NA.<br>
+So we couldn't do **bk_data_2 <- map_dfr(2:8, extract_table_df)** like this. So I would break them and change column name before combining so we have less missing Data "NA".
+
+
+```{r}
+bk_data_2 <- map_dfr(2, extract_table_df)
+bk_data_3 <- map_dfr(3, extract_table_df)
+bk_data_4_8 <- map_dfr(4:8, extract_table_df)
+glimpse(bk_data_2)
+glimpse(bk_data_3)
+glimpse(bk_data_4_8)
+```
+
+# Data Cleaning
+
+
+```{r}
+# Now as all column name are of same format we can combine them all together in one.
+bk_data <- bind_rows(bk_data_2, bk_data_3, bk_data_4_8)
+glimpse(bk_data)
+```
+
+We have 119 Observations. and 4 variables
+
+```{r}
+bk_data <- bk_data %>% 
+            mutate(country = ifelse(is.na(Country),`Country/territory`,Country))
+
+glimpse(bk_data)
+```
+
+```{r}
+plot_missing(bk_data)
+```
+
+As we can see that only missing variables from web extraction is years entered which is not given in wikipedia as well. So after cross referencing what I found to be true.
+
+```{r}
+sample(bk_data$Yearentered, 5)
+```
+
+As we can see the yearentered column needs some clean up as the refernce attached to yearentered has also came along with it. We just need is beginning four digit year ignoring the reference.
+
+# Data Tidy 
+
+**Tidy the text data**
+
+```{r}
+bk_tidy_data <- bk_data %>%
+  mutate(year = as.numeric(str_sub(Yearentered, end=4))) %>% # make new cloumn year 
+  filter(!is.na(year)) %>% # Filter out the missing year
+  dplyr::select(-Notes) # We don't need notes 
+
+```
+
+As we can see it has only taken first 4 digits from the yearenetered column.
+```{r}
+unique(bk_tidy_data$country) %>% length()
+```
+
+We have 101 unique countries in our burger king datasets.
+
+Now we have clean data from the web but we are missing the world map spatial data which we can get from `rnaturalearth` package.
+
+```{r}
+spatial_countries<- ne_countries(scale = "medium", returnclass = "sf")
+# glimpse(spatial_countries) # Return Multiploygon.
+count(spatial_countries) # We have total 241 countries in multipolygon 
+```
+
+Before we plot we need to find that all our country of interest data are in multiploygon package and we don't have any missing data or mismatching country name. Let's run the sanity check for all the country name before we plot.
+
+name_en: Name in English
+
+```{r}
+mismatched_between_two <- bk_tidy_data %>%
+              anti_join(spatial_countries, by  = c("country" = "name_en"))
+mismatched_between_two
+```
+
+
+```{r}
+setdiff(bk_data$country, spatial_countries$name_en)
+```
+
+We can see there are 4 matches. 4 others countries have no information about the opening year. So lets just correct 4 that has been mismatched and leave the other 4.
+
+We can see all the english country name by expanding spatial countries that didn't match. Let's choose by the first letter.
+Lets try to look through the first letter of the word. 
+
+```{r}
+grep("^U|^M|T|C", spatial_countries$name_en, value = TRUE) %>% sample(8)
+```
+
+Let's try the grep function which is much better in pattern recognition that getting first letter of the word.
+```{r}
+#grep("M", spatial_countries$name_en, value = TRUE)
+grep("+hIna+", spatial_countries$name_en,ignore.case= T, value = TRUE) 
+grep("macEDONIA+", spatial_countries$name_en,ignore.case= T, value = TRUE)
+grep("TImo+", spatial_countries$name_en,ignore.case= T, value = TRUE) # I have to remove last name Leste to get Timor.
+grep("+nITed+", spatial_countries$name_en, ignore.case= T, value = TRUE) # will ignore case sensitivity.
+```
+
+Advantages of using grep function is even the name of Country like Timor-Leste has been changed we can still find by providing Timor name same goes for China.
+
+After we have found out 4 countries we need to include them. We can use tribble function to create a datasets with two column one with the country name which is perfect match and one with the datasets that is bk_tidy_data
+
+```{r}
+match_country <- tribble(~country, ~spatial_countries,
+                            "United States", "United States of America",
+                                "Macedonia", "Republic of Macedonia",
+                              "Timor-Leste", "East Timor",
+                                "China", "People's Republic of China")
+match_country
+```
+
+We can now completely join the match country data that we just created to the bk_tidy_data
+
+```{r, message = FALSE}
+bk_clean_data <- bk_tidy_data %>%
+                    left_join(match_country) %>%
+                     mutate(country= ifelse(is.na(spatial_countries), country, spatial_countries)) %>%
+                      left_join(spatial_countries, by  = c("country" = "name_en"))
+```
+
+**Sanity Check**
+```{r}
+mismatched_between_two_after_clean <- bk_clean_data %>%
+              anti_join(spatial_countries, by  = c("country" = "name_en"))
+# mismatched_between_two_after_clean
+```
+
+Lets plot the base map 
+```{r}
+ggplot() +
+  geom_sf(data = spatial_countries) 
+```
+
+
+```{r, eval = FALSE}
+plot_fun <- function(open_year){
+p <- ggplot() + 
+  ## Add the background countries, but filter away Antarctica because it is unecessary.
+  geom_sf(data = filter(countries_sf, name_en != "Antarctica")) + 
+  ## Add the countries data, filtering so countries only appear after the first burger king has opened
+  geom_sf(data = filter(bk_clean_data, year <= open_year), fill = rgb(236, 28, 36, maxColorValue = 255)) + 
+  ## Change the theme so we don't get a background plot or axes. The coord_sf part is a workaround to a current bug that makes gridlines appear.
+  theme_void() + 
+  coord_sf(datum=NA) +
+  guides(fill=FALSE) + 
+  ## Stitch the year to the title with glue
+  labs(title = glue("    Countries with a Burger King, year: {open_year}"),
+       subtitle = glue("      Count of countries: {nrow(filter(joined_data, year <= open_year))}"))
+print(p)
+}
+```
+
+
+**Burger King Animation gif**
+
+![Burger King Animation gif](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/bk_animation_1.gif?raw=true)
+Now to save the gif to our working directory.
+
+```{r}
+# save_gif(walk(min(bk_clean_data$year):max(bk_clean_data$year), plot_fun), delay = 0.5, gif_file = "bk_animation.gif")
+```
+
+Wow!!!. It seems quite beautiful journey and can be done with less lines of code. Similarly Lets move on to Competitor McDonald's Timeline chart
+
+#2. McDonald's
+
+![Macdonalds Animation gif](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/mac_animation.gif?raw=true)
+
+McDonald's is an American fast food company, founded in 1940 as a restaurant operated by Richard and Maurice McDonald, in San Bernardino, California, United States. They rechristened their business as a hamburger stand, and later turned the company into a franchise, with the Golden Arches logo being introduced in 1953 at a location in Phoenix, Arizona. In 1955, Ray Kroc, a businessman, joined the company as a franchise agent and proceeded to purchase the chain from the McDonald brothers. McDonald's had its original headquarters in Oak Brook, Illinois, but moved its global headquarters to Chicago in early 2018.
+
+McDonald's is the world's largest restaurant chain by revenue,[8] serving over 69 million customers daily in over 100 countries[9] across 37,855 outlets as of 2018.Although McDonald's is best known for its hamburgers, cheeseburgers and french fries, they also feature chicken products, breakfast items, soft drinks, milkshakes, wraps, and desserts. In response to changing consumer tastes and a negative backlash because of the unhealthiness of their food,[12] the company has added to its menu salads, fish, smoothies, and fruit. The McDonald's Corporation revenues come from the rent, royalties, and fees paid by the franchisees, as well as sales in company-operated restaurants. According to two reports published in 2018, McDonald's is the world's second-largest private employer with 1.7 million employees (behind Walmart with 2.3 million employees)
+
+Let's load the necessary libraries.
+```{r, message= FALSE, warning= FALSE, error= FALSE}
+library(tidyverse)
+library(rvest)
+library(sf) # Simple Features standard
+library(glue)
+library(rnaturalearth)
+library(gifski)
+library(janitor)
+library(DataExplorer)
+library(stringi)
+library(lubridate)
+library(gganimate)
+```
+
+
+Lets scrape all the location timeline from the wikipedia as well.
+```{r}
+mac_url <- "https://en.wikipedia.org/wiki/List_of_countries_with_McDonald%27s_restaurants"
+mac_html <- read_html(mac_url) %>% 
+                html_nodes("table") %>%  # Gives all the uhtml tables
+                    html_table(header=T, fill = TRUE)
+```
+
+Similarly as we have done  for the Burger King.let's Extract all the tables that are in the webpage
+
+# Extraction
+Out of 9 outputs, our table of interest is Table 2 (3rd Output). In this case we don't have to merge/combine as we can get all the observation in one table.
+```{r}
+table <- read_html(mac_url) %>% 
+                html_nodes("table") %>%  # Gives all the uhtml tables
+                    html_table(header=T, fill = TRUE)
+
+glimpse(table[2]) # Our table of interest.
+```
+
+# Function
+Lets see the table
+```{r}
+table <- mac_url %>%
+          read_html() %>%
+            html_nodes(xpath = '//*[@id="mw-content-text"]/div/table[2]') %>% # glue both piece
+            html_table()
+glimpse(table)
+```
+
+We can see 121 observation and 8 variables which mateches the wikipedia McDonald's result. Lets save as mac_data
+
+```{r}
+mac_data <- table %>% as.data.frame()
+```
+
+**Sanity Check**
+
+After importing the data from the webpage it's always best idea to see that we extracted all the information from the required page without missing a single piece of information.
+
+```{r}
+plot_missing(mac_data )
+```
+
+# Data Cleaning
+It seems like Wikipedia has done wonderful job in storing all the data without missing a single piece of information. None of the table has any missing piece of information.
+
+```{r}
+# Lets clean the name from janitor package 
+mac_data <- clean_names(mac_data)
+glimpse(mac_data)
+```
+
+```{r}
+mac_data <- mac_data %>% 
+              mutate(country = ifelse(is.na(name_of_country), name_of_country,name_of_country)) %>% 
+              filter(!is.na(date_of_first_store)) %>% 
+              dplyr::select(-notes,-name_of_country)
+
+glimpse(mac_data)
+```
+
+Challange associated with this extraction is now we just need is country name and have to ignore all the links that came attached along with it. We can do this by using gsub function. In first line of code I am just interested in country name and ignoring all the strings that is enclosed inside the bracket.
+
+Let's see how many rows we have where country is followed by some reference ()
+```{r}
+print("length of Column")
+grep("\\s*\\([^\\)]+\\)",mac_data$country) %>% length()
+
+print("Row Number")
+grep("\\s*\\([^\\)]+\\)",mac_data$country) # Returns row number. 
+
+print("Country name with the bracket")
+grep("\\s*\\([^\\)]+\\)",mac_data$country, value = TRUE) 
+```
+
+So we see there are 16 countries out of 121 that have reference followed along with them while extracting from Wikipedia.
+Now as this information is irrelevant from the animation chart goal. We can ignore them and only extract country name.
+
+```{r}
+mac_data$country <- gsub("\\s*\\([^\\)]+\\)","",as.character(mac_data$country)) # Country
+```
+
+**Sanity Check**
+Let's see if we have any country that have bracket in it.
+```{r}
+grep("\\s*\\([^\\)]+\\)",mac_data$country) %>% length()
+grep("\\s*\\([^\\)]+\\)",mac_data$country, value = TRUE) 
+```
+
+
+So now our country name extracted is clean.Let's move on date of first store opening column and see if the data is clean.
+
+```{r}
+# grep("\\s*\\([^\\)]+\\)",mac_data$date_of_first_store) %>% length()
+# grep("\\s*\\([^\\)]+\\)",mac_data$date_of_first_store) # Returns only row number. 
+# grep("\\s*\\([^\\)]+\\)",mac_data$date_of_first_store, value = TRUE) 
+```
+
+We can ignore the country variables but then we will run into another problem that is all the dates will bind together.
+
+```{r}
+# extract only all the digits from the column.
+mac_data <- mac_data %>% mutate(year = regmatches(mac_data$date_of_first_store, gregexpr("\\d{4}", mac_data$date_of_first_store)))
+
+# Take only first 4 digits as date
+mac_data$year <- stri_extract_first_regex(mac_data$date_of_first_store, "\\d{4}")
+```
+
+Also,lets drop the coming soon countries which has not been open yet.
+
+```{r}
+mac_data <- drop_na(mac_data) # Lets drop future Macdonalds as of Now.
+```
+
+```{r}
+glimpse(mac_data)
+```
+
+We have 118 Observation as we have dropped down 3 Rows where McDonalds was coming soon.Lets change year column to date from Character.
+
+```{r}
+mac_data$year <- as.Date(mac_data$year, "%Y")
+mac_data$year <- as.double(lubridate::year(mac_data$year))
+```
+
+# Data Tidy
+
+
+```{r}
+spatial_countries<- ne_countries(scale = "medium", returnclass = "sf")
+# glimpse(spatial_countries) # Return Multiploygon.
+count(spatial_countries) # We have total 241 countries in multipolygon 
+```
+
+We have to look for any country mismatch like what we did in Burger King Analysis.
+
+```{r}
+mismatched_between_two_mac <- mac_data %>%
+              anti_join(spatial_countries, by  = c("country" = "name_en"))
+# mismatched_between_two_mac
+```
+
+```{r}
+matched_country <- tribble(~country, ~spatial_countries,
+                            "United States", "United States of America",
+                         "U.S. Virgin Islands","United States Virgin Islands",
+                         "Curacao", "Curaçao",
+                         "Bahamas", "The Bahamas",
+                         "PR of China", "People's Republic of China",
+                         "Martinique","French Southern and Antarctic Lands",
+                          "Guadeloupe","French Southern and Antarctic Lands",
+                         "Northern Marianas","Northern Mariana Islands",
+                           "Reunion","French Southern and Antarctic Lands",     
+                         "Gibraltar","British Indian Ocean Territory",
+                         "French Guiana","French Southern and Antarctic Lands")
+matched_country
+```
+
+```{r, warning= FALSE, message= FALSE}
+mac_clean_data <- mac_data %>%
+                    left_join(matched_country) %>%
+                     dplyr::mutate(country = ifelse(is.na(spatial_countries), country, spatial_countries)) %>%
+                      left_join(spatial_countries,  by= c("country" = "name_en"))
+# tail(mac_clean_data)
+```
+
+**Sanity check**
+```{r, warning= FALSE, error= FALSE, message= FALSE}
+mac_clean_data %>%
+              anti_join(spatial_countries, by  = c("country" = "name_en"))
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = spatial_countries) 
+```
+
+```{r}
+mac_tidy_data <- mac_clean_data %>%
+  filter(!is.na(year))
+
+```
+
+
+
+```{r}
+plot_fun <- function(open_year){
+p <- ggplot() + 
+  geom_sf(data = filter(mac_tidy_data, year <= open_year), fill = rgb(236, 28, 36, maxColorValue = 255)) + 
+  theme_void() + 
+  coord_sf(datum=NA) + 
+  guides(fill=FALSE) + 
+  labs(title = glue("Countries with a Macdonalds, year: {open_year}"),
+       subtitle = glue("Count of countries: {nrow(filter(mac_tidy_data, year <= open_year))}"))
+print(p)
+}
+
+```
+
+**McDonalds Animation gif**
+
+![Macdonalds Animation gif](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/mac_animation.gif?raw=true)
+
+```{r}
+#save_gif(walk(min(mac_tidy_data$year):max(mac_tidy_data$year), plot_fun), delay = 0.8, gif_file = "mac_animation.gif")
+```
+
+Awesome, Bravo!!!. It feel little different than Burger King may be little easy cake walk but was definetly different level of data cleaning step and was not repetation. Now lets move onto KFC(Kentucky Fried Chicken) and see if we could generate Similar kind of Chart.
+
+# 3. Kentucky Fried Chicken (KFC)
+
+![KFC Animation gif](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/kfc_animation.gif?raw=true)
+Now to save the gif to our working directory.
+
+
+KFC, also known as Kentucky Fried Chicken, is an American fast food restaurant chain headquartered in Louisville, Kentucky, that specializes in fried chicken. It is the world's second-largest restaurant chain (as measured by sales) after McDonald's, with 22,621 locations globally in 136 countries as of December 2018.The chain is a subsidiary of Yum! Brands, a restaurant company that also owns the Pizza Hut, Taco Bell, and WingStreet chains.
+
+
+KFC Hot Wings and fries
+KFC was founded by Colonel Harland Sanders, an entrepreneur who began selling fried chicken from his roadside restaurant in Corbin, Kentucky, during the Great Depression. Sanders identified the potential of the restaurant franchising concept, and the first "Kentucky Fried Chicken" franchise opened in Utah in 1952. KFC popularized chicken in the fast food industry, diversifying the market by challenging the established dominance of the hamburger. By branding himself as "Colonel Sanders", Harland became a prominent figure of American cultural history, and his image remains widely used in KFC advertising to this day. However, the company's rapid expansion overwhelmed the aging Sanders, and he sold it to a group of investors led by John Y. Brown Jr. and Jack C. Massey in 1964.
+
+KFC was one of the first American fast food chains to expand internationally, opening outlets in Canada, the United Kingdom, Mexico, and Jamaica by the mid-1960s. Throughout the 1970s and 1980s, it experienced mixed fortunes domestically, as it went through a series of changes in corporate ownership with little or no experience in the restaurant business
+
+Lets load the necessary libraries for this part.
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(rvest)
+library(sf) # Simple Features standard
+library(glue)
+library(rnaturalearth)
+library(gifski)
+library(janitor)
+library(DataExplorer)
+```
+
+
+**Load websites: KFC**
+
+What better place would it be beside Wikipedia to extract all the location of KFC.
+
+```{r}
+url <- "https://en.wikipedia.org/wiki/List_of_countries_with_KFC_franchises"
+kfc_url <- "https://en.wikipedia.org/wiki/List_of_countries_with_KFC_franchises"
+kfc_html <- read_html(kfc_url) %>%
+  html_nodes("table") %>% # Gives all the uhtml tables
+  html_table(header=T, fill = TRUE)
+```
+
+# Extraction
+We have 17 outputs. Our table of interest is not a single table but would be combination of multiple tables as we did in Burger King Webscrapping project. After identifying first and last table lets have a look and do sanity check with Wikipedia. Remember our goal is to extract all the table information without missing a single data.
+
+
+```{r}
+table <- read_html(kfc_url) %>%
+  html_nodes("table") %>% # Gives all the uhtml tables
+  html_table(header=T, fill = TRUE)
+  
+table[2] %>% head(2)# beginning of the table
+table[8] %>% head(2) # Ending of the table
+```
+
+Our next step is to verify that we have all tables matched along. So lets have a quick pick on all the tables that we are planning to merge. I have excluded Future market as it doesnt make sense to plot until and unless it has open.
+
+
+Although our interest column the country and year entered and year existed is mixed up between the tables. We need to rearrange and clean up little more before we could merge and then plot. 
+
+```{r}
+glimpse(table[2])
+glimpse(table[3])
+glimpse(table[4])
+glimpse(table[5])
+```
+
+# Function
+
+**Alternative way to do same thing much less hassle way.**
+
+Lets write a function to extract all the tables of interest from above list.
+
+Extract all the tables.
+
+Xpath: //*[@id="mw-content-text"]/div/table[2] :  Same way I extracted inspecting the page.
+
+```{r}
+# Function :
+extract_table_df <- function(table_no){
+                        table <- url %>%
+                          read_html() %>%
+                          html_nodes(xpath = glue('//*[@id="mw-content-text"]/div/table[{table_no}]')) %>% # glue both piece
+                          html_table()
+                          table_df <- table[[1]] %>%
+                          mutate(Yearentered = as.character(Yearentered)) # As some year entered is in integer
+} # Convert that year enetered into character.
+```
+
+# Extract all the 6 tables and bind them using map function. 
+Our table of interest is from table 2 to 8 and we have to ignore table 9 & 10 because table 9 & 10 is the year they left the countries. So we have combine from table 2-8 and then 11-13.So lets do that and see if we could extract all the codes.
+
+
+
+```{r}
+#purrr-package map_df() to iterate the function:
+kfc_data_2 <- map_dfr(2:8, extract_table_df)
+kfc_data_3 <- map_dfr(11:13, extract_table_df)
+glimpse(kfc_data_2)
+glimpse(kfc_data_3)
+```
+
+We have 141 observation with 4 variables from table 2 to table 8 and then from table 11 -13 we have 3 observation and 4 variables. So lets merge together and have one table with all info. There is one problem merging this data as we have Owner column name different in two group. Although the column is none of our interest for this project. Anways I want to import right way.
+
+```{r}
+# Renaming
+kfc_data_2 <-dplyr::rename(kfc_data_2,Owner=`Owner/major operator`) 
+```
+
+
+```{r}
+# Now as all column name are of same format we can combine them all together in one.
+kfc_data <- bind_rows(kfc_data_2, kfc_data_3)
+```
+
+# Data Cleaning
+
+We have 144 Observations. and 4 variables. Next step would be to clean the column names so that we could not end up having syntax error because of white space.
+
+```{r}
+kfc_data <- clean_names(kfc_data)
+glimpse(kfc_data)
+```
+
+After importing data lets see if we have any missing data and cross check with wikipedia.
+
+```{r}
+plot_missing(kfc_data)
+```
+
+Good News is the yearentered and country have no missing values which is of our interest.
+
+```{r}
+table(kfc_data$yearentered) %>% sample(5)
+```
+
+As we can see the yearentered column needs some clean up as the reference attached to yearentered has also came along with it. We just need is beginning four digit year ignoring the reference.
+
+# Data Tidy
+
+**Tidy the text data**
+
+```{r, error= FALSE, message= FALSE, warning= FALSE}
+kfc_tidy_data <- kfc_data %>%
+  mutate(year = as.numeric(str_sub(yearentered, end=4))) %>% # make new cloumn year 
+  filter(!is.na(year)) %>% # Filter out the missing year
+  dplyr::select(-notes) # We don't need notes 
+
+# sample(kfc_tidy_data,2)
+```
+
+```{r}
+unique(kfc_tidy_data$country) %>% length()
+```
+
+We have 131 unique countries in our KFC datasets.
+
+Now we have clean data from the web but we are missing the world map spatial data which we can get from `rnaturalearth` package.
+
+```{r}
+spatial_countries<- ne_countries(scale = "medium", returnclass = "sf")
+# glimpse(spatial_countries) # Return Multiploygon.
+count(spatial_countries) # We have total 241 countries in multipolygon 
+```
+
+Before we plot we need to find that all our country of interest data are in multiploygon package and we don't have any missing data or mismatching country name. Let's run the sanity check for all the country name before we plot.
+
+name_en: Name in English
+
+```{r}
+mismatched_between_two <- kfc_tidy_data %>%
+              anti_join(spatial_countries, by  = c("country" = "name_en"))
+mismatched_between_two
+```
+
+We can see there are 7 mismatches between the data we extracted from the webpage and the spatial countries from the package. 
+
+Let's create a table of the country and matched them respectively.
+
+
+```{r}
+grep("^C", spatial_countries$name_en, value = TRUE)
+```
+
+```{r}
+match_country <- tribble(~country, ~spatial_countries,
+                         "Eswatini","eSwatini",
+                         "China", "People's Republic of China",
+                         "Bahamas","The Bahamas",
+                          "Bonaire", "Netherlands",
+                         "North Macedonia", "Republic of Macedonia",
+                         "Turkey[192]","Turkey",
+                            "United States", "United States of America"
+                             )
+match_country
+```
+
+We can now completely join the match country data that we just created to the kfc_tidy_data
+
+```{r, message = FALSE}
+kfc_clean_data <- kfc_tidy_data %>%
+                    left_join(match_country) %>%
+                     mutate(country = ifelse(is.na(spatial_countries), country, spatial_countries)) %>%
+                      left_join(spatial_countries,  by  = c("country" = "name_en"))
+# head(kfc_clean_data)
+```
+
+Lets plot the base map 
+```{r}
+ggplot() +
+  geom_sf(data = spatial_countries) 
+```
+
+
+
+```{r}
+plot_fun <- function(open_year){
+p <- ggplot() + 
+  ## Add the background countries, but filter away Antarctica because it is unecessary.
+  geom_sf(data = filter(spatial_countries, name_en != "Antarctica")) + 
+  ## Add the countries data, filtering so countries only appear after the first burger king has opened
+  geom_sf(data = filter(kfc_clean_data, year <= open_year), fill = rgb(236, 28, 36, maxColorValue = 255)) + 
+  ## Change the theme so we don't get a background plot or axes. The coord_sf part is a workaround to a current bug that makes gridlines appear.
+  theme_void() + coord_sf(datum=NA) + guides(fill=FALSE) + 
+  ## Stitch the year to the title with glue
+  labs(title = glue("    Countries with a KFC, year: {open_year}"),
+       subtitle = glue("      Count of countries: {nrow(filter(kfc_clean_data, year <= open_year))}"))
+print(p)
+}
+```
+
+**KFC Animation GIF**
+
+![KFC Animation gif](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/kfc_animation.gif?raw=true)
+Now to save the gif to our working directory.
+
+```{r}
+# save_gif(walk(min(kfc_clean_data$year):max(kfc_clean_data$year), plot_fun), delay = 0.8, gif_file = "kfc_animation.gif")
+```
+
+
+```{r}
+# table(bk_clean_data$year)
+# table(mac_clean_data$year)
+# table(kfc_clean_data$year)
+# table(bk_modified_data$year)
+# table(mk_modified_data$year)
+```
+
+
+# Modified Data
+
+```{r}
+bk_data=bk_clean_data
+bk_data <- bk_data %>% arrange(year)
+# head(bk_data,2)
+```
+
+
+```{r}
+newrow = rep(1930:1953)
+# Insert into 4th row
+bk_modified_data <- add_row(bk_data, year = newrow, .before = 1)
+tail(bk_modified_data,5)
+
+bk_modified_data <- bk_modified_data[1:122, ]
+# tail(bk_modified_data,2)
+# head(bk_modified_data, 2)
+```
+
+```{r}
+mismatched_between_two <- bk_modified_data %>%
+              anti_join(spatial_countries, by  = c("country" = "name_en"))
+# mismatched_between_two
+```
+
+
+```{r}
+plot_fun <- function(open_year){
+p <- ggplot() + 
+  geom_sf(data = filter(spatial_countries, name_en != "Antarctica")) + 
+  geom_sf(data = filter(bk_modified_data, year <= open_year), fill = rgb(236, 28, 36, maxColorValue = 255)) + 
+  theme_void() + coord_sf(datum=NA) + guides(fill=FALSE) + 
+  ## Stitch the year to the title with glue
+  labs(title = glue("    Countries with a BK, year: {open_year}"),
+       subtitle = glue("      Count of countries: {nrow(filter(bk_modified_data, year <= open_year))}"))
+print(p)
+}
+```
+
+
+```{r}
+#save_gif(walk(min(bk_modified_data$year):max(bk_modified_data$year), plot_fun), delay = 0.8, gif_file = "bk_mod_animation.gif")
+```
+
+# Modified Mac 
+```{r}
+mk_data=mac_clean_data
+mk_data <- mac_clean_data %>% arrange(year)
+```
+
+```{r}
+newrow = rep(1930:1939)
+mk_modified_data <- add_row(mk_data, year = newrow, .before = 1)
+head(mk_modified_data,2)
+tail(mk_modified_data,2)
+```
+
+```{r}
+addrow = rep(2017:2019)
+mk_modified_data <- add_row(mk_modified_data, year = addrow, .after = 128)
+tail(mk_modified_data,2)
+
+```
+
+```{r}
+mismatched_between_two <- mk_modified_data %>%
+              anti_join(spatial_countries, by  = c("country" = "name_en"))
+# mismatched_between_two
+```
+
+```{r}
+plot_fun <- function(open_year){
+p <- ggplot() + 
+  geom_sf(data = filter(spatial_countries, name_en != "Antarctica")) + 
+  geom_sf(data = filter(mk_modified_data, year <= open_year), fill = rgb(236, 28, 36, maxColorValue = 255)) + 
+  theme_void() + coord_sf(datum=NA) + guides(fill=FALSE) + 
+  ## Stitch the year to the title with glue
+  labs(title = glue("    Countries with a Mac, year: {open_year}"),
+       subtitle = glue("      Count of countries: {nrow(filter(mk_modified_data, year <= open_year))}"))
+print(p)
+}
+```
+
+```{r}
+#save_gif(walk(min(mk_modified_data$year):max(mk_modified_data$year), plot_fun), delay = 0.8, gif_file = "mk_mod_animation.gif")
+```
+
+![Thank You ](https://github.com/shahnp/Learn/blob/master/Restaurant_franchise_animation/KFC_BK_Mac_animation.gif?raw=true)
