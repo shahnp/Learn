@@ -1,0 +1,214 @@
+---
+title: "Progress_bar"
+author: "Pankaj Shah"
+date: "6/17/2019"
+output: 
+  html_document: 
+    theme: journal
+    toc: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+Snowfall Datasets from 1940-2016 in inches.
+
+
+```{r}
+library(tidyverse)
+library(gganimate)
+
+snowfall_data <- rio::import("https://raw.githubusercontent.com/shahnp/data/master/Bos_NYC_Chicago_snowfall.txt")
+head(snowfall_data)
+tail(snowfall_data)
+```
+
+Let's find Minimum Snowfall for all three cities.
+
+```{r}
+min(snowfall_data$Boston)
+min(snowfall_data$Chicago)
+min(snowfall_data$NYC)
+```
+
+Let's find Maximum Snowfall for all three cities.
+```{r}
+max(snowfall_data$Boston)
+max(snowfall_data$Chicago)
+max(snowfall_data$NYC)
+```
+
+Give me Min & Max Snowfall of each cities.
+```{r}
+t(apply(snowfall_data, MARGIN = 2, function(x) range(x, na.rm=TRUE)))
+```
+
+
+Maximum Snowfall
+```{r}
+bos_max <- snowfall_data[which.max(snowfall_data$Boston), ]
+chic_max <- snowfall_data[which.max(snowfall_data$Chicago), ]
+nyc_max <- snowfall_data[which.max(snowfall_data$NYC), ]
+
+max_snowfall <- rbind(bos_max, chic_max, nyc_max)
+max_snowfall
+```
+
+Minimum Snowfall
+```{r}
+bos_min <- snowfall_data[which.min(snowfall_data$Boston), ]
+chic_min <- snowfall_data[which.min(snowfall_data$Chicago), ]
+nyc_min <- snowfall_data[which.min(snowfall_data$NYC), ]
+
+min_snowfall <- rbind(bos_min, chic_min, nyc_min)
+min_snowfall
+```
+
+```{r}
+long_snowfall <- snowfall_data %>% gather(City, total_snowfall, na.rm = FALSE, -Winter)
+long_snowfall <- long_snowfall %>% group_by(Winter)
+head(long_snowfall,20)
+tail(long_snowfall,20)
+```
+
+
+Lets set up static plot for year 1940-41.
+```{r}
+long_snowfall_data_1940_41 <- long_snowfall  %>% 
+                          filter(Winter == "1940-1941" | Winter == "1941-1942" |Winter == "1942-1943")
+
+head(long_snowfall_data_1940_41)
+```
+
+
+```{r}
+ggplot(long_snowfall, 
+       aes(x = City, y = total_snowfall, label = City, colour = City))+
+  geom_point(stat = "identity", size = 3.5)+
+  geom_segment(aes (x = City,
+                      y = 2.8,
+                      xend = City,
+                      yend = total_snowfall)) +
+  #geom_text(color = "black", size = 3)+
+  coord_flip()+
+  theme(legend.position = "none")
+
+```
+
+```{r}
+long_snowfall_data_1940_41 %>% head(2)
+```
+
+
+```{r}
+head(snowfall_data,2)
+```
+
+
+```{r}
+snowfall_data <- snowfall_data %>% 
+                    separate(Winter, into = c("begin", "end"), sep = "-")
+```
+
+
+```{r}
+head(snowfall_data)
+```
+
+
+```{r, message= FALSE, error = FALSE, warning= FALSE}
+library(lubridate)
+snowfall_data$begin <- lubridate::ymd(snowfall_data$begin,truncated = 2L)
+snowfall_data$end <- lubridate::ymd(snowfall_data$end,truncated = 2L)
+glimpse(snowfall_data)
+```
+
+```{r}
+snowfall_data %>% gather(key, value)
+
+long_DF <- snowfall_data %>% gather(City,total_snowfall,  Boston:NYC)
+head(long_DF, 24)  # note, for brevity, I only show the data for the first two years 
+```
+
+```{r}
+tail(snowfall_data)
+```
+
+```{r}
+library(png)
+library(grid)
+
+library(RCurl)
+myurl <- "https://raw.githubusercontent.com/shahnp/data/master/Image/snowfall.png"
+snowfall_background  <-  readPNG(getURLContent(myurl))
+```
+
+
+```{r}
+p <- ggplot(long_DF, 
+       aes(x = City, y = total_snowfall, label = City, colour = City))+
+  annotation_custom(rasterGrob(snowfall_background, 
+                                 width = unit(1,"npc"), 
+                                 height = unit(1,"npc")), 
+                      -Inf, Inf, -Inf, Inf) +
+  geom_point(stat = "identity", size = 15)+
+  geom_hline(yintercept = 37.47, linetype="dotted", 
+                color = "Red", size=1.5)+
+  geom_text(aes(x=1.5, label="Mean Snowfall", y=45), colour="blue", vjust = 1.2, text=element_text(size=18))+
+  geom_segment(aes (x = City,
+                      y = 2.8,
+                      xend = City,
+                      yend = total_snowfall)) +
+  geom_text(color = "black", size = 3)+
+  theme(legend.position = "none")+
+  theme(plot.title = element_text(hjust = .5),
+          axis.ticks = element_blank()) +  #Centre plot title
+  ylim(0,120)+
+  labs(title = "Snowfall Change {frame_time}", x= "City", y = "Total Snow (inches)")+
+  transition_time(begin)+
+  ease_aes("linear") # each frame should take same amount of time.
+
+
+animate(p, nframes = 300, fps = 5, end_pause = 20)
+```
+
+
+```{r}
+ggplot(long_DF, 
+       aes(x = City, y = total_snowfall, label = City, colour = City))+
+  annotation_custom(rasterGrob(snowfall_background, 
+                                 width = unit(1,"npc"), 
+                                 height = unit(1,"npc")), 
+                      -Inf, Inf, -Inf, Inf) +
+  geom_point(stat = "identity", size = 15)+
+  geom_hline(yintercept = 37.47, linetype="dotted", 
+                color = "Red", size=1.5)+
+  geom_text(aes(x=1.5, label="Mean Snowfall", y=45), colour="blue", vjust = 1.2, text=element_text(size=18))+
+  geom_segment(aes (x = City,
+                      y = 2.8,
+                      xend = City,
+                      yend = total_snowfall)) +
+  geom_text(color = "black", size = 3)+
+  ylim(0,120)+
+  theme(legend.position = "none")
+```
+
+
+```{r}
+library(tidyverse)
+library(rvest)
+library(sf) # Simple Features standard
+library(glue)
+library(rnaturalearth)
+library(gifski)
+library(janitor)
+library(DataExplorer)
+library(gganimate)
+```
+
+
+```{r}
+save_gif(walk(min(bk_clean_data$year):max(bk_clean_data$year), plot_fun), delay = 0.5, gif_file = "snowfall_animation.gif")
+```
+
+
