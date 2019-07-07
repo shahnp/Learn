@@ -1,0 +1,380 @@
+---
+title: "Fireworks_theme"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(sf)
+library(gganimate)
+library(ggplot2)
+library(hrbrthemes)
+```
+
+# Grid plot
+```{r}
+grid_plot <- expand.grid(lon = seq(-180, 180, 10), 
+                         lat = seq(-90, 90, 10)) %>% 
+    pmap(~st_point(c(...))) %>%    # convert each pair to an sf point
+    st_sfc(crs = 4326) %>%    # convert all points to sf column
+    st_sf() %>%    # convert to sf data frame
+    ggplot() + 
+    geom_sf()
+
+grid_plot
+```
+
+# Spiral plot.
+```{r}
+grid_plot + coord_sf(crs = "+proj=laea +lat_0=-90 +ellps=WGS84 +no_defs")
+```
+
+A HOLE
+
+```{r}
+theme_set(theme_classic()+ theme(panel.background = element_rect(fill = 'black')))
+```
+
+```{r, cache=TRUE, error = FALSE, warning = FALSE, message=FALSE}
+p <- crossing(x = 1:30, nesting(t = 1:10, y = .5^(seq(t)))) %>% 
+    ggplot(aes(x, y)) +
+    theme(panel.background = element_rect(fill = 'black'))+
+    geom_point(color = 'white') + 
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.5)
+    theme_void()
+  
+animate(p, fps = 30)
+```
+
+# STRAIGHT
+
+```{r, cache=TRUE, error = FALSE, warning = FALSE, message=FALSE}
+p <- map_dfr(1:10, ~crossing(x = 1:30, nesting(
+        y = seq(1, .x, length.out = 10)^0.5, 
+        t = 1:10))) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(color = 'white') + 
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.3)
+
+animate(p, fps = 30)
+```
+
+# PARTICLES AND GNATS
+
+```{r, cache=TRUE, error = FALSE, warning = FALSE, message=FALSE}
+p <- map_dfr(1:10, ~data_frame(y = seq(1, .x, length.out = 10), t = 1:10)) %>% 
+    mutate(x = runif(n())) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(color = 'white') + 
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.5)
+
+animate(p, nframes = 300, fps = 30)
+```
+
+
+# MANDALA
+
+```{r, cache=TRUE, error = FALSE, warning = FALSE, message=FALSE}
+p <- map_dfr(1:10, ~crossing(
+        x = 1:30, 
+        nesting(
+            y = runif(10), 
+            t = 1:10
+        )
+    )) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(color = 'white') + 
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.5)
+
+animate(p, nframes = 20)
+```
+
+# EXPLOSION
+
+```{r}
+p <- map_dfr(1:10, ~crossing(
+        x = runif(30), 
+        nesting(
+            y = seq(1, .x, length.out = 10)^0.5, 
+            t = 1:10)
+        )
+    ) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(color = 'white') +
+    geom_point(color = 'red') +
+    geom_point(color = 'blue') +
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.5)
+
+animate(p, fps = 30)
+```
+
+# SPIRALS
+
+```{r}
+p <- map_dfr(1:10, ~crossing(
+        x = {
+            x = seq(30) + 0.3*.x; 
+            ifelse(x > 30, x - 30, x)
+        }, 
+        nesting(
+            y = seq(1, .x, length.out = 10)^0.5, 
+            t = 1:10)
+        )
+    ) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(color = 'white', aes = 0.3) + 
+    geom_point(color = 'red', aes = 0.4) +
+    geom_point(color = 'blue', aes = 0.3) +
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.3)
+
+animate(p, fps = 30)
+```
+
+# IN-N-OUT
+
+```{r}
+p <- map_dfr(0:10, ~crossing(
+        x = {
+            x = seq(30) + 0.6*.x; 
+            ifelse(x >= 30, x - 30, x)
+        }, 
+        nesting(
+            y = seq(1, .x, length.out = 10)^0.5, 
+            t = 1:10)
+        )
+    ) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(color = 'white', aes = 0.3) + 
+    geom_point(color = 'red', aes = 0.4) +
+    geom_point(color = 'blue', aes = 0.3) + 
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.5)
+
+animate(p, fps = 30)
+```
+
+# FIREWORK
+
+```{r}
+p <- map_dfr(1:10, ~crossing(
+        x = {
+            x = seq(30) + 0.6*.x; 
+            ifelse(x > 30, x - 30, x)
+        }, 
+        nesting(
+            y = seq(1, .x, length.out = 10)^0.5, 
+            t = 1:10)
+        )
+    ) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(colour = 'red',alpha = 0.4) + 
+    geom_point(colour = 'white',alpha = 0.3) +
+    geom_point(colur = "blue", alpha = 0.3) +
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.3)
+
+animate(p, fps = 30)
+```
+
+
+```{r}
+p <- map_dfr(1:10, ~crossing(
+        x = {
+            x = seq(30) + 0.6*.x; 
+            ifelse(x > 30, x - 30, x)
+        }, 
+        nesting(
+            y = seq(1, .x, length.out = 10)^0.5, 
+            t = 1:10)
+        )
+    ) %>% 
+    ggplot(aes(x, y)) + 
+    geom_point(colour = 'red',alpha = 0.4) + 
+    geom_point(colour = 'white',alpha = 0.3) +
+    geom_point(colur = "blue", alpha = 0.3) +
+    coord_polar() + 
+    transition_time(t) + 
+    shadow_wake(0.3)
+
+animate(p, fps = 30)
+```
+
+# All colors colorful 
+
+```{r}
+# Firework colours
+colours <- c('lawngreen','gold','white','orchid','royalblue','yellow','orange')
+# Produce data for a single blast
+blast <- function(n, radius, x0, y0, time) {
+  u <- runif(n, -1, 1)
+  rho <- runif(n, 0, 2*pi)
+  x <- radius * sqrt(1 - u^2) * cos(rho) + x0
+  y <- radius * sqrt(1 - u^2) * sin(rho) + y0
+  id <- sample(.Machine$integer.max, n + 1)
+  data.frame(
+    x = c(x0, rep(x0, n), x0, x),
+    y = c(0, rep(y0, n), y0, y),
+    id = rep(id, 2),
+    time = c((time - y0) * runif(1), rep(time, n), time, time + radius + rnorm(n)),
+    colour = c('white', rep(sample(colours, 1), n), 'white', rep(sample(colours, 1), n)),
+    stringsAsFactors = FALSE
+  )
+}
+# Make 20 blasts
+n <- round(rnorm(20, 30, 4))
+radius <- round(n + sqrt(n))
+x0 <- runif(20, -30, 30)
+y0 <- runif(20, 40, 80)
+time <- runif(20, max = 100)
+fireworks <- Map(blast, n = n, radius = radius, x0 = x0, y0 = y0, time = time)
+fireworks <- dplyr::bind_rows(fireworks)
+```
+
+```{r}
+ggplot(fireworks) + 
+  geom_path(aes(x = x, y = y, group = id, colour = colour)) + 
+  scale_colour_identity()
+```
+
+```{r}
+ggplot(fireworks) + 
+  geom_point(aes(x, y, colour = colour, group = id), size = 0.5, shape = 20) + 
+  scale_colour_identity() + 
+  coord_fixed(xlim = c(-65, 65), expand = FALSE, clip = 'off') +
+  theme_void() + 
+  theme(plot.background = element_rect(fill = 'black', colour = NA), 
+        panel.border = element_blank()) + 
+  # Here comes the gganimate code
+  transition_components(time, exit_length = 20) + 
+  ease_aes(x = 'sine-out', y = 'sine-out') + 
+  shadow_wake(0.05, size = 3, alpha = TRUE, wrap = FALSE, 
+              falloff = 'sine-in', exclude_phase = 'enter') + 
+  exit_recolour(colour = 'black')
+```
+
+```{r}
+
+```
+
+```{r}
+library(ggplot2)
+library(gganimate)
+
+anime_one <- 
+  ggplot(mtcars, aes(factor(cyl), mpg)) + 
+  geom_boxplot() + 
+  # Here comes the gganimate code
+  transition_states(
+    gear,
+    transition_length = 2,
+    state_length = 1
+  ) +
+  enter_fade() + 
+  exit_shrink() +
+  ease_aes('sine-in-out')
+
+anime_two <- 
+  ggplot(mtcars, aes(factor(cyl), mpg, fill = factor(cyl))) + 
+  geom_boxplot() + 
+  # Here comes the gganimate code
+  transition_states(
+    gear,
+    transition_length = 2,
+    state_length = 1
+  ) +
+  enter_fade() + 
+  exit_shrink() +
+  ease_aes('sine-in-out')
+```
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(magick)
+library(gganimate)
+
+
+A<-rnorm(100,50,10)
+B<-rnorm(100,50,10)
+DV <- c(A,B)
+IV <- rep(c("A","B"),each=100)
+sims <- rep(rep(1:10,each=10),2)
+df<-data.frame(sims,IV,DV)
+
+means_df <- df %>%
+               group_by(sims,IV) %>%
+               summarize(means=mean(DV),
+                         sem = sd(DV)/sqrt(length(DV)))
+
+stats_df <- df %>%
+              group_by(sims) %>%
+              summarize(ts = t.test(DV~IV,var.equal=TRUE)$statistic)
+
+a <- ggplot(means_df, aes(x = IV,y = means, fill = IV)) +
+  geom_bar(stat = "identity") +
+  geom_point(aes(x = IV, y = DV), data = df, alpha = .25) +
+  geom_errorbar(aes(ymin = means - sem, ymax = means + sem), width = .2) +
+  theme_classic() +
+  transition_states(
+    states = sims,
+    transition_length = 2,
+    state_length = 1
+  ) + 
+  enter_fade() + 
+  exit_shrink() +
+  ease_aes('sine-in-out')
+  
+a_gif <- animate(a, width = 240, height = 240)
+
+b <- ggplot(stats_df, aes(x = ts))+
+  geom_vline(aes(xintercept = ts, frame = sims))+
+  geom_line(aes(x=x,y=y),
+            data = data.frame(x = seq(-5,5, .1),
+                              y = dt(seq(-5,5, .1), df = 18))) +
+  theme_classic() +
+  ylab("density") +
+  xlab("t value") +
+  transition_states(
+    states = sims,
+    transition_length = 2,
+    state_length = 1
+  ) +
+  enter_fade() + 
+  exit_shrink() +
+  ease_aes('sine-in-out')
+
+b_gif <- animate(b, width = 240, height = 240)
+
+a_mgif <- image_read(a_gif)
+b_mgif <- image_read(b_gif)
+
+new_gif <- image_append(c(a_mgif[1], b_mgif[1]))
+for(i in 2:100){
+  combined <- image_append(c(a_mgif[i], b_mgif[i]))
+  new_gif <- c(new_gif, combined)
+}
+
+new_gif
+```
+
+
