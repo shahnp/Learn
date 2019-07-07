@@ -1,0 +1,230 @@
+---
+title: "Happy_fourth_of_july"
+author: "Pankaj Shah"
+date: "7/4/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(magick)
+library(gganimate)
+library(tidyverse)
+library(grid)
+library(png)
+library(RCurl)
+library(scales)
+library(dplyr)
+```
+
+
+```{r}
+
+# Firework colours
+colours <- c('white','red','royalblue','gold','black','orchid','royalblue','yellow','orange')
+
+
+# Produce data for a single blast
+blast <- function(n, radius, x0, y0, time) {
+u <- runif(n, -1, 1)
+rho <- runif(n, 0, 2*pi)
+x <- radius * sqrt(1 - u^2) * cos(rho) + x0
+y <- radius * sqrt(1 - u^2) * sin(rho) + y0
+id <- sample(.Machine$integer.max, n + 1)
+
+
+data.frame(x = c(x0, rep(x0, n), x0, x),
+           y = c(0, rep(y0, n), y0, y),
+          id = rep(id, 2),
+          time = c((time - y0) * runif(1), rep(time, n), time, time + radius + rnorm(n)),
+        colour = c('white', rep(sample(colours, 1), n), 'white', rep(sample(colours, 1), n)),stringsAsFactors = FALSE)
+}
+# Make 20 blasts
+n <- round(rnorm(20, 30, 4))
+radius <- round(n + sqrt(n))
+x0 <- runif(20, -30, 30)
+y0 <- runif(20, 40, 80)
+time <- runif(20, max = 100)
+fireworks <- Map(blast, n = n, radius = radius, x0 = x0, y0 = y0, time = time)
+fireworks <- dplyr::bind_rows(fireworks)
+```
+
+
+```{r}
+library(magick)
+flag <- image_read("http://bestanimations.com/Flags/USA/usa-american-flag-gif-3.gif") %>%
+  image_scale("200x") %>%
+  image_quantize(128)
+
+length(flag)
+```
+
+```{r, cache=TRUE, error = FALSE, warning = FALSE, message=FALSE}
+ggplot(fireworks) + 
+  annotation_custom(rasterGrob(flag, 
+                                 width = unit(1,"npc"), 
+                                 height = unit(1,"npc")), 
+                      -Inf, Inf, -Inf, Inf) +
+  geom_point(aes(x, y, colour = colour, group = id), size = 0.5, shape = 20) + 
+  scale_colour_identity() + 
+  coord_fixed(xlim = c(-65, 65), expand = FALSE, clip = 'off') +
+  theme_void() + 
+  theme(plot.background = element_rect(fill = 'black', colour = NA), 
+        panel.border = element_blank()) + 
+  # Here comes the gganimate code
+  transition_components(time, exit_length = 20) + 
+  ease_aes(x = 'sine-out', y = 'sine-out') + 
+  shadow_wake(0.05, size = 3, alpha = TRUE, wrap = FALSE, 
+              falloff = 'sine-in', exclude_phase = 'enter') + 
+
+  exit_recolour(colour = 'black')
+
+saveGIF(loop.animate(), interval = .5, movie.name="firework_july4.gif")
+```
+
+```{r}
+library(colorspace)
+```
+
+
+```{r}
+#create dataset
+happy_july_4<-data.frame(x=rnorm(500, 0, 1.5), y=rnorm(500, 0, 1.5), z=rnorm(500,0,1.5))
+
+#create objects to hold the letters, colors, and x and y coordinates that we will scroll through
+sign<-c("H","A","P","P","Y","J","U","L","Y","4th","!!")
+colors <- rainbow_hcl(10, c=300)
+xcoord<-rep(c(-2, -1, 0, 1, 2),2)
+ycoord<-c(2, 1.7, 2.1, 1.5, 2, -.5, 0, -1, -.8, -.7)
+```
+
+
+```{r}
+#set up the theme in an object (get rid of axes, grids, and legend)
+theme.both<- theme(legend.position="none", 
+                   panel.background = element_blank(),
+                   axis.ticks = element_blank(),
+                   axis.line = element_blank(), 
+                   axis.text.x = element_blank(), 
+                   axis.text.y = element_blank(),
+                   plot.background = element_rect(fill = "black"),
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank())
+
+#plot the first letter (set index=1 to get the first element of color, letter, and coordinates)
+index<-1
+
+ggplot(happy_july_4, aes(x, y, alpha = z, color=z)) + 
+    geom_point(alpha=0.2) + labs(title="", x="", y="") + 
+    theme.both + 
+    scale_colour_gradient(low = "white", high="lightblue")+
+    geom_text(x=xcoord[index], y=ycoord[index], size=15, label=sign[index],color=colors[index])
+    #annotate(geom = "text", x=xcoord[index], y=ycoord[index], size=15, label=sign[index],color=colors[index])
+```
+
+
+```{r}
+#set up function to create a new dataset, plot it, and annotate it by an index argument
+draw.a.plot<-  function(index){
+ 
+  #make up a new dataframe
+  happy_july_4<-data.frame(x=rnorm(500, 0, 1.5), y=rnorm(500, 0, 1.5), z= rnorm(500,0,1.5))
+  
+  #plot according to the index passed
+  g<-ggplot(happy_july_4, aes(x, y, alpha = z, color=z)) + 
+    annotation_custom(rasterGrob(flag, 
+                                 width = unit(1,"npc"), 
+                                 height = unit(1,"npc")), 
+                      -Inf, Inf, -Inf, Inf) +
+      geom_point(alpha=0.2) + labs(title="", x="", y="") +
+      theme.both + 
+      scale_colour_gradient(low = "white", high="lightblue")+
+      geom_text(x=xcoord[index], y=ycoord[index], size=15, label=sign[index], color=colors[index])
+  
+  #print out the plot
+  print(g)
+}
+
+#set up function to loop through the draw.a.plot() function
+loop.animate <- function() {
+  lapply(1:length(sign), function(i) {
+    draw.a.plot(i)
+  })
+}
+
+#save the images into a GIF
+saveGIF(loop.animate(), interval = .5, movie.name="happy_july4.gif")
+```
+
+```{r}
+head(happy_july_4, 2)
+head(fireworks, 2)
+```
+
+
+# working on this.
+
+```{r, cache= TRUE}
+draw.a.plot<-  function(index){
+ 
+  #make up a new dataframe
+  happy_july_4<-fireworks
+  
+  #plot according to the index passed
+  g<-ggplot(happy_july_4, aes(x, y)) + 
+    annotation_custom(rasterGrob(flag, 
+                                 width = unit(1,"npc"), 
+                                 height = unit(1,"npc")), 
+                      -Inf, Inf, -Inf, Inf) +
+      geom_point(alpha=0.2) + 
+      labs(title="", x="", y="") +
+      theme.both + 
+      scale_colour_gradient(low = "white", high="lightblue")+
+      geom_text(x=xcoord[index], y=ycoord[index], size=15, label=sign[index], color=colors[index])+
+  transition_components(time, exit_length = 20) + 
+  ease_aes(x = 'sine-out', y = 'sine-out') + 
+  shadow_wake(0.05, size = 3, alpha = TRUE, wrap = FALSE, 
+              falloff = 'sine-in', exclude_phase = 'enter') + 
+  exit_recolour(colour = 'blue')
+  
+  #print out the plot
+  print(g)
+}
+
+#set up function to loop through the draw.a.plot() function
+loop.animate <- function() {
+  lapply(1:length(sign), function(i) {
+    draw.a.plot(i)
+  })
+}
+
+
+
+#save the images into a GIF
+saveGIF(loop.animate(), interval = .5, movie.name="modified_july4.gif")
+```
+
+
+```{r}
+ggplot() + 
+
+  geom_point(fireworks,aes(x, y, colour = colour, group = id), size = 0.5, shape = 20) + 
+  scale_colour_identity() + 
+  coord_fixed(xlim = c(-65, 65), expand = FALSE, clip = 'off') +
+  theme_void() + 
+  theme(plot.background = element_rect(fill = 'black', colour = NA), 
+        panel.border = element_blank()) + 
+  # Here comes the gganimate code
+  transition_components(time, exit_length = 20) + 
+  ease_aes(x = 'sine-out', y = 'sine-out') + 
+  shadow_wake(0.05, size = 3, alpha = TRUE, wrap = FALSE, 
+              falloff = 'sine-in', exclude_phase = 'enter') + 
+  geom_text(aes(30, 47), size = 8, hjust = 0, color = "black")+
+  exit_recolour(colour = 'black')
+```
+
