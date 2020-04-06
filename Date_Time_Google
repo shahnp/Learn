@@ -1,0 +1,140 @@
+/**
+ * The onOpen function runs automatically when the Google Docs document is
+ * opened. Use it to add custom menus to Google Docs that allow the user to run
+ * custom scripts. For more information, please consult the following two
+ * resources.
+ *
+ * Extending Google Docs developer guide:
+ *     https://developers.google.com/apps-script/guides/docs
+ *
+ * Document service reference documentation:
+ *     https://developers.google.com/apps-script/reference/document/
+ */
+function onOpen() {
+  // Add a menu with some items, some separators, and a sub-menu.
+  DocumentApp.getUi().createMenu('Utilities')
+      .addItem('Insert Date', 'insertAtCursor')
+      .addItem('Insert Time', 'insertTimeAtCursor')
+      .addItem('Insert Long Date', 'insertLDateAtCursor')
+      .addItem('Insert Date and Time', 'insertDTAtCursor')
+      .addItem('Insert Custom Long Date and Time', 'insertCLDTAtCursor')
+      .addToUi();
+  
+}
+
+/**
+ * Inserts the date at the current cursor location in boldface.
+ */
+function insertAtCursor() {
+  var cursor = DocumentApp.getActiveDocument().getCursor();
+
+  if (cursor) {
+    // Attempt to insert text at the cursor position. If insertion returns null,
+    // then the cursor's containing element doesn't allow text insertions.
+    var date = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd"); // "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    var element = cursor.insertText(date);
+    if (element) {
+      element.setBold(true);
+    } else {
+      DocumentApp.getUi().alert('Cannot insert text at this cursor location.');
+    }
+  } else {
+    DocumentApp.getUi().alert('Cannot find a cursor in the document.');
+  }
+  moveCursorToEnd();
+}
+/**
+ * Inserts the time at the current cursor location in boldface.
+ */
+function insertTimeAtCursor() {
+  var cursor = DocumentApp.getActiveDocument().getCursor();
+
+  if (cursor) {
+    // Attempt to insert text at the cursor position. If insertion returns null,
+    // then the cursor's containing element doesn't allow text insertions.
+    var time = Utilities.formatDate(new Date(), "GMT", "HH:mm:ss"); // "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    var element = cursor.insertText(time);
+    if (element) {
+      element.setBold(true);
+    } else {
+      DocumentApp.getUi().alert('Cannot insert text at this cursor location.');
+    }
+  } else {
+    DocumentApp.getUi().alert('Cannot find a cursor in the document.');
+  }
+  moveCursorToEnd();
+}
+/**
+ * Inserts the long date at the current cursor location in boldface.
+ */
+function insertLDateAtCursor() {
+  var cursor = DocumentApp.getActiveDocument().getCursor();
+
+  if (cursor) {
+    // Attempt to insert text at the cursor position. If insertion returns null,
+    // then the cursor's containing element doesn't allow text insertions.
+    var longDate = Utilities.formatDate(new Date(), "GMT", "MMMM dd, yyyy"); // "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    var element = cursor.insertText(longDate);
+    if (element) {
+      element.setBold(true);
+    } else {
+      DocumentApp.getUi().alert('Cannot insert text at this cursor location.');
+    }
+  } else {
+    DocumentApp.getUi().alert('Cannot find a cursor in the document.');
+  }
+  moveCursorToEnd();
+}
+
+/**
+ * Inserts the Date and time at the current cursor location in boldface.
+ */
+function insertDTAtCursor() {
+  var cursor = DocumentApp.getActiveDocument().getCursor();
+
+  if (cursor) {
+    // Attempt to insert text at the cursor position. If insertion returns null,
+    // then the cursor's containing element doesn't allow text insertions.
+    var longDateTime = Utilities.formatDate(new Date(), "GMT", "MMMM dd, yyyy HH:mm"); // "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    var element = cursor.insertText(longDateTime);
+    if (element) {
+      element.setBold(true);
+    } else {
+      DocumentApp.getUi().alert('Cannot insert text at this cursor location.');
+    }
+  } else {
+    DocumentApp.getUi().alert('Cannot find a cursor in the document.');
+  }
+  moveCursorToEnd();
+}
+
+/**
+ * Inserts the custom long date and time at the current cursor location in boldface.
+ */
+function insertCLDTAtCursor() {
+  var cursor = DocumentApp.getActiveDocument().getCursor();
+
+  if (cursor) {
+    // Attempt to insert text at the cursor position. If insertion returns null,
+    // then the cursor's containing element doesn't allow text insertions.
+    var customLDateTime = Utilities.formatDate(new Date(), "GMT", "EEEE, MMMM dd, yyyy- HH:mm'hrs'"); // "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    var element = cursor.insertText(customLDateTime);
+    if (element) {
+      element.setBold(true);
+    } else {
+      DocumentApp.getUi().alert('Cannot insert text at this cursor location.');
+    }
+  } else {
+    DocumentApp.getUi().alert('Cannot find a cursor in the document.');
+  }
+  moveCursorToEnd();
+}
+
+function moveCursorToEnd() {
+  //move cursor to the end
+  var doc=DocumentApp.getActiveDocument();
+  var txtElement=doc.getCursor().getElement();
+  var txtOffset=doc.getCursor().getOffset();
+  var position=doc.newPosition(txtElement, txtOffset + 1);
+  doc.setCursor(position);
+}
